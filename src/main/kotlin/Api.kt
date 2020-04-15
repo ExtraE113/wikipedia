@@ -10,6 +10,8 @@ import org.jsoup.select.Elements
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
+import org.apache.commons.text.StringEscapeUtils
+
 val WIKI = "simple"
 
 fun main() {
@@ -26,7 +28,6 @@ fun main() {
 		)
 	}
 
-    //println(getLinkFromTitle("Tachisme"))
 
 }
 
@@ -48,28 +49,37 @@ fun getLinkFromTitle(title: String, wiki: String = WIKI): String {
 
 fun extractWikiLink(link: Element): String {
     assert(link is Element && link.tagName() == "a")
-    return link.attr("href").substring(6)
+    if(link.attr("href") != null && link.attr("href").length > 6)
+        return link.attr("href").substring(6).replace("--__OPEN-PAREN__--", "(").replace("--__CLOSE-PAREN__--", ")")
+    return ""
 }
 
 
 
 fun getFirstLink(doc: Node): Element {
     doc.childNodes().filter { it is Element && (it.tagName()  in listOf("p", "ul", "ol") || it.attr("class") == "redirectMsg") }.forEach { topLevelChildren ->
-		val stringRepresentation = topLevelChildren.toString()
+		var stringRepresentation = topLevelChildren.toString()
+        val item = Jsoup.parseBodyFragment(stringRepresentation)
+        val links = item.select("a[href]")
+        for ((index, it) in links.withIndex()) {
+            links[index] = it.attr("href", it.attr("href").replace("(", "--__OPEN-PAREN__--").replace(")", "--__CLOSE-PAREN__--"))
+        }
 
+        stringRepresentation = item.toString()
 		//split by () and get even only-- filters out anything between parens. probably not perfect, but works pretty well
-		//for one thing, it could be messed up by () in <a>
+		//for one thing, it ~~could be~~ *is* messed up by () in <a>
 		//todo consider fix
         //todo very likely very buggy, improve, test, bug fig
         //todo inefficient
-		stringRepresentation.split("(", ")").filterIndexed { index, _ -> index % 2 ==0 }.forEach{
-			val line = Jsoup.parseBodyFragment(it)
+		stringRepresentation = stringRepresentation.replace(Regex("\\(.*?\\)"), "")
+//        StringEscapeUtils.unescapeHtml4(stringRepresentation).split("(", ")").filterIndexed { index, _ -> index % 2 ==0 }.forEach{ itabc ->
+            val line = Jsoup.parseBodyFragment(stringRepresentation)
 
-			val links: Elements = line.select("a[href]")
+			val linksNotParend: Elements = line.select("a[href]")
 
-			if (links.size > 0) {
+			if (linksNotParend.size > 0) {
 
-                links.forEach { it1 ->
+                linksNotParend.forEach { it1 ->
                     var parent = it1.parent()
                     while (parent.tagName() != "i"){
                         if (parent.hasParent()){
@@ -78,7 +88,7 @@ fun getFirstLink(doc: Node): Element {
                             break
                         }
                     }
-                    if(parent.tagName() != "i"){
+                    if(parent.tagName() != "i" && !it1.attr("href").contains("redlink=1")){
                         return it1
                     }
                 }
@@ -91,7 +101,7 @@ fun getFirstLink(doc: Node): Element {
 
 		}
 
-	}
+	//}
     return Element("a")
 }
 
