@@ -2,7 +2,7 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeIn
 import org.junit.jupiter.api.Test
 
-class getFirstLinkTest{
+class GetFirstLinkTests{
     @Test
     fun getFirstLinkFromTitleTest() {
         getLinkFromTitle("Fire_pump", wiki = "simple") shouldBeEqualTo "Pump"
@@ -15,6 +15,7 @@ class getFirstLinkTest{
         getLinkFromTitle("Frank_Herbert", wiki = "en") shouldBeEqualTo "List_of_science_fiction_authors"
         getLinkFromTitle("Ernest_Cline", wiki = "en") shouldBeEqualTo "Ready_Player_One_(film)"
         getLinkFromTitle("John_Corabi", wiki = "en") shouldBeEqualTo "The_Scream_(band)"
+        getLinkFromTitle("&", wiki = "simple") shouldBeIn arrayOf("Ampersand", "Logogram")
 
     }
 }
