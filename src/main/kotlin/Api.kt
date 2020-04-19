@@ -1,31 +1,32 @@
-import com.beust.klaxon.JsonArray
 import com.beust.klaxon.JsonObject
-import khttp.get
 import com.beust.klaxon.Klaxon
-import java.io.StringReader
-
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
-import java.lang.Error
-import java.lang.NullPointerException
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.ObjectOutputStream
+import java.io.StringReader
 import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-//todo use only java.net.url (not khttp)
-//  remove khttp from gradle
 
 val WIKI = "simple"
 
 val articleBuilder = ArticleBuilder()
 val articlesHolder = ArticlesHolder(50)
 
+val debugRunShort = true
+val debugURLBase = "https://simple.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=25&gapto=.tj"
+val apiURLBase = if (!debugRunShort) "http://$WIKI.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=max" else debugURLBase
+
+
 fun core() {
-	var r = get("http://$WIKI.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=max")
+	var r = URL(apiURLBase)
 	val klaxon = Klaxon()
-	var parsed = klaxon.parseJsonObject(StringReader(r.text))
+	var parsed = klaxon.parseJsonObject(StringReader(r.readText()))
 
 	var pages = (parsed["query"] as JsonObject).obj("pages")!!
 	pages.forEach {
@@ -37,8 +38,8 @@ fun core() {
 
     while (parsed["continue"] != null) {
         r =
-            get("https://$WIKI.wikipedia.org/w/api.php?action=query&format=json&prop=&generator=allpages&gapmaxsize=100&gaplimit=max&continue=${(parsed["continue"] as JsonObject)["continue"]}&gapcontinue=${(parsed["continue"] as JsonObject)["gapcontinue"]}")
-        parsed = klaxon.parseJsonObject(StringReader(r.text))
+            URL("$apiURLBase&continue=${(parsed["continue"] as JsonObject)["continue"]}&gapcontinue=${(parsed["continue"] as JsonObject)["gapcontinue"]}")
+        parsed = klaxon.parseJsonObject(StringReader(r.readText()))
         pages = (parsed["query"] as JsonObject).obj("pages")!!
         pages.forEach {
             println(
@@ -48,6 +49,17 @@ fun core() {
         }
     }
 
+    //save the ArticleHolder & contents to a file so they can be retrieved later
+    try {
+        val fileOut = FileOutputStream("./ah.ser")
+        val out = ObjectOutputStream(fileOut)
+        out.writeObject(articlesHolder)
+        out.close()
+        fileOut.close()
+        System.out.printf("Serialized data is saved in ./ah.ser")
+    } catch (i: IOException) {
+        i.printStackTrace()
+    }
 
 }
 
@@ -62,18 +74,7 @@ fun main() {
 }
 
 fun makeArticle(title: String):Article? {
-    val titleOfArticleLinkedTo:String
-    //todo there's got to be a more elegant way to do this
-    //  basically this just allows for the possibility that there are articles that are listed by allarticles generator (or whatever its called) that don't acutally exist
-    //  no idea why this would happen but it does
-    // fixme this is fundamentally broken and needs to be debugged
-
-    try {
-        titleOfArticleLinkedTo =
-            getLinkFromTitle(title) //todo is there a more concise equally descriptive name?
-    } catch (e:Throwable){
-        return null
-    }
+    val titleOfArticleLinkedTo:String = getLinkFromTitle(title) //todo is there a more concise equally descriptive name?
 
     if(articlesHolder.containsKey(title)){
         articlesHolder[title]?.firstLink = articlesHolder[titleOfArticleLinkedTo]
@@ -97,17 +98,7 @@ fun getLinkFromTitle(title: String, wiki: String = WIKI): String {
     val r = URL(link).readText()
     val klaxon = Klaxon()
     val parsed = klaxon.parseJsonObject(StringReader(r))
-    var html:Any? = null
-    if(title == "102564")
-        println("de")
-    try {
-        if (parsed.obj("error")?.get("code") == "missingtitle")
-            throw Exception("no article with that name")
-        html = parsed.obj("parse")!!.obj("text")!!["*"]!!
-        html!!
-    }catch (e:NullPointerException){
-        println("debug me 2")
-    }
+    val html  = parsed.obj("parse")!!.obj("text")!!["*"]!!
 
     var doc: Node = Jsoup.parse(html.toString()).body().getElementsByClass("mw-parser-output")[0]
 
@@ -118,7 +109,7 @@ fun getLinkFromTitle(title: String, wiki: String = WIKI): String {
 fun extractWikiLink(link: Element): String {
     assert(link is Element && link.tagName() == "a")
     if(link.attr("href") != null && link.attr("href").length > 6)
-        return link.attr("href").substring(6).replace("--__OPEN-PAREN__--", "(").replace("--__CLOSE-PAREN__--", ")")
+        return link.attr("href").substring(6).replace("--__OPEN-PAREN__--", "(").replace("--__CLOSE-PAREN__--", ")").split("#")[0]
     return ""
 }
 
