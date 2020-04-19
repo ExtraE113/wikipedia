@@ -2,12 +2,14 @@ import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 
 class ArticleTests {
+
+	val articlesHolder = ArticlesHolder(5)
+	val articleBuilder = ArticleBuilder()
+
 	@Test
-	fun ArticleTests() {
+	fun basicArticleTests() {
 		//todo document and expand
 
-		val articlesHolder = ArticlesHolder(5)
-		val articleBuilder = ArticleBuilder()
 
 		//some super basic tests
 		articleBuilder.title = "abc"
@@ -32,5 +34,12 @@ class ArticleTests {
 		articlesHolder["ghk"] shouldBeEqualTo targetArticle
 
 		//todo test parent code!!
+	}
+
+	@Test
+	fun serializationTest() {
+		//consider expanding
+		articlesHolder.save("./ahTest.ser")
+		ArticlesHolder.load("./ahTest.ser") shouldBeEqualTo articlesHolder
 	}
 }

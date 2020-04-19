@@ -1,4 +1,4 @@
-import java.io.Serializable
+import java.io.*
 
 class Article(
     var parents: ArrayList<Article>,
@@ -29,6 +29,10 @@ class Article(
 
     override fun equals(other: Any?): Boolean {
         return other is Article && other.firstLink == firstLink && other.isLinkedToEndArticle == isLinkedToEndArticle && parents == other.parents
+    }
+
+    override fun toString(): String {
+        return "$title links to ${firstLink?.title}"
     }
 }
 
@@ -80,6 +84,37 @@ class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCap
             )
             articleBuilder.reset()
             super.get(key)
+        }
+    }
+    fun save(path: String = "./ah.ser") {
+        try {
+            val fileOut = FileOutputStream(path)
+            val out = ObjectOutputStream(fileOut)
+            out.writeObject(articlesHolder)
+            out.close()
+            fileOut.close()
+            System.out.printf("Serialized data is saved in $path")
+        } catch (i: IOException) {
+            i.printStackTrace()
+        }
+    }
+    companion object {
+        fun load(path:String = "./ah.ser"): ArticlesHolder {
+            var out: ArticlesHolder? = null
+            try {
+                val fileIn = FileInputStream(path)
+                val `in` = ObjectInputStream(fileIn)
+                out = `in`.readObject() as ArticlesHolder
+                `in`.close()
+                fileIn.close()
+            } catch (i: IOException) {
+                i.printStackTrace()
+
+            } catch (c: ClassNotFoundException) {
+                println("ArticleHolder class not found")
+                c.printStackTrace()
+            }
+        return out!!
         }
     }
 }

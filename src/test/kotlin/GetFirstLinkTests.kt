@@ -16,6 +16,7 @@ class GetFirstLinkTests{
         getLinkFromTitle("Ernest_Cline", wiki = "en") shouldBeEqualTo "Ready_Player_One_(film)"
         getLinkFromTitle("John_Corabi", wiki = "en") shouldBeEqualTo "The_Scream_(band)"
         getLinkFromTitle("&", wiki = "simple") shouldBeIn arrayOf("Ampersand", "Logogram")
+        getLinkFromTitle("0s", wiki = "simple") shouldBeEqualTo "Regent"
 
     }
 }
