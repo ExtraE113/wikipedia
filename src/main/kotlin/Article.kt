@@ -1,8 +1,10 @@
+import java.io.Serializable
+
 class Article(
     var parents: ArrayList<Article>,
     val title: String,
     isDirectlyLinkedToEndArticle: Boolean = false
-) {
+) : Serializable{
     var firstLink: Article? = null
     set(value) {
         field?.parents?.remove(this)
@@ -24,9 +26,13 @@ class Article(
         //necessary to call setter code. Initializations do not call setter code, but this is an assignment (even though it looks like initialization.
         isLinkedToEndArticle = isLinkedToEndArticle
     }
+
+    override fun equals(other: Any?): Boolean {
+        return other is Article && other.firstLink == firstLink && other.isLinkedToEndArticle == isLinkedToEndArticle && parents == other.parents
+    }
 }
 
-class ArticleBuilder {
+class ArticleBuilder : Serializable {
 
     var firstLink: Article? = null
     var parents: ArrayList<Article> = ArrayList()
@@ -60,7 +66,7 @@ class ArticleBuilder {
 
 
 
-class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCapacity) {
+class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCapacity), Serializable{
     private val articleBuilder = ArticleBuilder()
     override fun get(key: String): Article? {
         return if (super.containsKey(key))
