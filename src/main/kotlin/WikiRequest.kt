@@ -19,10 +19,10 @@ data class WikiRequest(val url: URL, val callback: (JsonObject, Map<String, Any>
 
 	//todo test
 	override fun compareTo(other: WikiRequest): Int {
-		if (other.priority != this.priority) {
-			return other.priority - this.priority
+		return if (other.priority != this.priority) {
+			other.priority - this.priority
 		} else {
-			return other.created.compareTo(this.created)
+			other.created.compareTo(this.created)
 		}
 	}
 

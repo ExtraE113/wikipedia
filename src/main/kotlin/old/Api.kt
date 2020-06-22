@@ -1,7 +1,8 @@
 package old
 
+import Article
+import ArticleBuilder
 import WIKI
-import articleBuilder
 import articlesHolder
 import com.beust.klaxon.Klaxon
 import org.jsoup.Jsoup
@@ -21,10 +22,10 @@ import java.nio.charset.StandardCharsets
 //
 //	processPagesFromJsonObjectPageList(parsed)
 //
-//	while (old.canContinue(parsed)) {
+//	while (canContinue(parsed)) {
 //		r =
 //			URL(
-//				old.getApiURLBase + old.continueArguments(parsed)
+//				old.getApiURLBase + continueArguments(parsed)
 //			)
 //		println("!!!!!!! " + r.query)
 //		parsed = klaxon.parseJsonObject(StringReader(r.readText()))
@@ -51,19 +52,19 @@ import java.nio.charset.StandardCharsets
 //	}
 //}
 
-
+val articleBuilder = ArticleBuilder()
 //makes an article given a title and adds it to old.getArticlesHolder
 //also makes the article it links to
 //todo should also probably be modified to work with whatever structure we end up using based on this
 //	(https://kotlinlang.org/docs/reference/coroutines/shared-mutable-state-and-concurrency.html#actors)
-fun makeArticle(title: String): Article? {
+fun makeArticle(title: String): Article {
 	val titleOfArticleLinkedTo: String =
 		getLinkFromTitle(title) //todo is there a more concise equally descriptive name?
 
 	//todo all this behavior probably belongs in the ArticleHolder class
 	//	or at least should return something instead of modifying as a side effect
 	return if (articlesHolder.containsKey(title)) {
-		articlesHolder[title]!!.firstLink = articlesHolder[titleOfArticleLinkedTo]
+		articlesHolder[title].firstLink = articlesHolder[titleOfArticleLinkedTo]
 		articlesHolder[title]
 	} else {
 		//todo make sure old.getArticleBuilder isn't being used anywhere
@@ -72,7 +73,7 @@ fun makeArticle(title: String): Article? {
 		articleBuilder.firstLink = articlesHolder[titleOfArticleLinkedTo]
 		val art = articleBuilder.build()
 		articlesHolder[art.title] = art
-		articlesHolder[art.title]!!
+		articlesHolder[art.title]
 	}
 }
 
@@ -116,6 +117,9 @@ fun getFirstLink(doc: Node): Element {
 
 			val linksNotParend: Elements = line.select("a[href]")
 			if (linksNotParend.size > 0) {
+				fun parentIsNotIllegal(parent: Element) =
+					parent.tagName() != "i" /*parent is not italics*/ && "reference" !in parent.classNames() /*not a footnote i.e. parent is not a reference class*/
+
 
 				linksNotParend.forEach { it1 ->
 					var parent = it1.parent()
@@ -147,9 +151,6 @@ fun getFirstLink(doc: Node): Element {
 		}
 	return Element("a")
 }
-
-fun parentIsNotIllegal(parent: Element) =
-	parent.tagName() != "i" /*parent is not italics*/ && "reference" !in parent.classNames() /*parent is not a reference class*/
 
 fun extractWikiLink(link: Element): String {
 	assert(link.tagName() == "a")

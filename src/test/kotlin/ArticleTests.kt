@@ -1,7 +1,4 @@
-import old.Article
-import old.ArticleBuilder
-import old.ArticlesHolder
-import org.amshove.kluent.shouldBeEqualTo
+import org.amshove.kluent.*
 import org.junit.jupiter.api.Test
 
 class ArticleTests {
@@ -23,20 +20,41 @@ class ArticleTests {
 
 		articleBuilder.firstLink = articlesHolder["def"]
 		articleBuilder.title = "ghk"
-        articleBuilder.isDirectlyLinkedToEndArticle = true
+        articleBuilder.isEndArticle = true
 		articlesHolder["ghk"] = articleBuilder.build()
         //test that reset is working AND called after .build
 		articleBuilder.title shouldBeEqualTo null
         articleBuilder.firstLink shouldBeEqualTo null
-        articleBuilder.isDirectlyLinkedToEndArticle shouldBeEqualTo false
+        articleBuilder.isEndArticle shouldBeEqualTo false
 
-		val targetArticle = Article(ArrayList(), "ghk", true)
+		val targetArticle = Article(HashSet(), "ghk").apply { isEndArticle = true }
 		targetArticle.firstLink = articlesHolder["def"]
 
-        //test equality and builder NOTE: checks that parents are in the same order for equality, but this isn't strictly-speaking necessary
 		articlesHolder["ghk"] shouldBeEqualTo targetArticle
 
-		//todo test parent code!!
+		//check that trying to build without title should blow up
+		invoking {  articleBuilder.build() } shouldThrow AnyException
+
+		//test parent propagation
+		articlesHolder["lmn"].firstLink = articlesHolder["pqr"]
+
+		articlesHolder["pqr"].parents shouldContain articlesHolder["lmn"]
+
+		//test linked to end article propagation
+		articlesHolder["pqr"].firstLink = articlesHolder["xyz"]
+		articlesHolder["xyz"].firstLink = articlesHolder["def"]
+		articlesHolder["def"].firstLink = articlesHolder["stu"]
+
+
+		articlesHolder["stu"].isLinkedToEndArticle = true
+		articlesHolder["lmn"].isLinkedToEndArticle `should be equal to` true
+
+		//make sure we don't get infinite recursion with parents
+		articlesHolder["stu"].isLinkedToEndArticle = false
+		articlesHolder["lmn"].isLinkedToEndArticle `should be equal to` false
+		articlesHolder["stu"].firstLink = articlesHolder["lmn"]
+		articlesHolder["stu"].isLinkedToEndArticle = true
+		articlesHolder["lmn"].isLinkedToEndArticle `should be equal to` true
 	}
 
 	@Test

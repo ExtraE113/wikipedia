@@ -51,6 +51,21 @@ internal fun buildInitialQueue() :  Queue<String> {
 			queue.add(it)
 		}
 	}
+	//checks if there is a continue block in the response, if there is then we can continue because there are more results
+	//todo test
+	fun canContinue(parsed: JsonObject) = parsed["continue"] != null
+
+
+	//builds the continue block part of the url that we request
+	//todo should build up dynamically depending on whats in the continue block (see api documentation for continue), but this works for now
+	//todo test
+	fun continueArguments(parsed: JsonObject) =
+		"&continue=${(parsed["continue"] as JsonObject)["continue"]}&gapcontinue=${
+		URLEncoder.encode(
+			(parsed["continue"] as JsonObject)["gapcontinue"].toString(),
+			StandardCharsets.UTF_8.toString()
+		)
+		}" //black magic json processing todo clean up
 
 	while (canContinue(parsed)) {
 		r =
@@ -64,23 +79,6 @@ internal fun buildInitialQueue() :  Queue<String> {
 
 	return queue
 }
-
-
-//checks if there is a continue block in the response, if there is then we can continue because there are more results
-//todo test
-internal fun canContinue(parsed: JsonObject) = parsed["continue"] != null
-
-
-//builds the continue block part of the url that we request
-//todo should build up dynamically depending on whats in the continue block (see api documentation for continue), but this works for now
-//todo test
-internal fun continueArguments(parsed: JsonObject) =
-	"&continue=${(parsed["continue"] as JsonObject)["continue"]}&gapcontinue=${
-	URLEncoder.encode(
-		(parsed["continue"] as JsonObject)["gapcontinue"].toString(),
-		StandardCharsets.UTF_8.toString()
-	)
-	}" //black magic json processing todo clean up
 
 
 //given a JsonObject (as returned by the api and parsed by klaxon when polling for all pages) return a LinkedHashSet of

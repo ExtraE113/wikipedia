@@ -1,8 +1,5 @@
 import com.beust.klaxon.JsonObject
 import com.beust.klaxon.Klaxon
-import old.*
-import old.canContinue
-import old.continueArguments
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -10,16 +7,17 @@ import org.jsoup.select.Elements
 import java.io.StringReader
 import java.lang.Exception
 import java.net.URL
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 
 //<editor-fold desc="Set up constants">
 val WIKI = "simple"
 
-//these two probably don't belong here. todo move
-val articleBuilder = ArticleBuilder()
+//this probably doesn't belong here. todo move
 val articlesHolder = ArticlesHolder(150_000)
 
-val debugRunShort = true
+val debugRunShort = false
 val debugURLBase =
 	"https://simple.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=25&gapto=.tj"
 val apiURLBase =
@@ -73,6 +71,23 @@ fun main() {
 
 fun addListRequestResultsToQueue(parsed: JsonObject, passthroughArguments: Map<String, Any>) { //todo name better
 
+	//checks if there is a continue block in the response, if there is then we can continue because there are more results
+	//todo test
+	fun canContinue(parsed: JsonObject) = parsed["continue"] != null
+
+
+	//builds the continue block part of the url that we request
+	//todo should build up dynamically depending on whats in the continue block (see api documentation for continue), but this works for now
+	//todo test
+	fun continueArguments(parsed: JsonObject) =
+		"&continue=${(parsed["continue"] as JsonObject)["continue"]}&gapcontinue=${
+		URLEncoder.encode(
+			(parsed["continue"] as JsonObject)["gapcontinue"].toString(),
+			StandardCharsets.UTF_8.toString()
+		)
+		}" //black magic json processing todo clean up
+
+
 	//step 1
 	if (canContinue(parsed)) {
 		requestQueue.add(
@@ -95,12 +110,13 @@ fun addListRequestResultsToQueue(parsed: JsonObject, passthroughArguments: Map<S
  *
  * To be used after a request for a parsed-to-HTML page
  *
- * First gets out wikilink, then extracts linked to article name, then creates relevant articles in articleholder
+ * First gets out wikilink, then extracts linked to article name, then creates relevant edge in articleholder
+ * (as a side effect it will create the articles if they don't already exist)
  *
  * @param [passthroughArguments] "title" -> String
  * @see WikiRequest
  */
-fun getFirstLink(response: JsonObject, passthroughArguments: Map<String, Any>) {
+fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 	fun getLinkElement(doc: Node): Element {
 		doc.childNodes()
 			.filter { it is Element && (it.tagName() in listOf("p", "ul", "ol") /* todo expand*/ || it.attr("class") == "redirectMsg") }
@@ -123,6 +139,9 @@ fun getFirstLink(response: JsonObject, passthroughArguments: Map<String, Any>) {
 
 				val linksNotParend: Elements = line.select("a[href]")
 				if (linksNotParend.size > 0) {
+
+					fun parentIsNotIllegal(parent: Element) =
+						parent.tagName() != "i" /*parent is not italics*/ && "reference" !in parent.classNames() /*not a footnote i.e. parent is not a reference class*/
 
 					linksNotParend.forEach { it1 ->
 						var parent = it1.parent()
@@ -154,21 +173,8 @@ fun getFirstLink(response: JsonObject, passthroughArguments: Map<String, Any>) {
 	//also makes the article it links to
 	//todo should also probably be modified to work with whatever structure we end up using based on this
 	//	(https://kotlinlang.org/docs/reference/coroutines/shared-mutable-state-and-concurrency.html#actors)
-	fun makeArticle(title: String, titleOfArticleLinkedTo: String): Article? {
-		//todo all this behavior probably belongs in the ArticleHolder class
-		//	or at least should return something instead of modifying as a side effect
-		return if (articlesHolder.containsKey(title)) {
-			articlesHolder[title]!!.firstLink = articlesHolder[titleOfArticleLinkedTo]
-			articlesHolder[title]
-		} else {
-			//todo make sure old.getArticleBuilder isn't being used anywhere
-			articleBuilder.reset()
-			articleBuilder.title = title
-			articleBuilder.firstLink = articlesHolder[titleOfArticleLinkedTo]
-			val art = articleBuilder.build()
-			articlesHolder[art.title] = art
-			articlesHolder[art.title]!!
-		}
+	fun makeArticle(title: String, titleOfArticleLinkedTo: String) {
+		articlesHolder[title].firstLink = articlesHolder[titleOfArticleLinkedTo]
 	}
 
 	val html = response.obj("parse")!!.obj("text")!!["*"]!!

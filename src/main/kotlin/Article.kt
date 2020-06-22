@@ -1,49 +1,68 @@
-package old
-
-import articlesHolder
 import java.io.*
 
 class Article(
-	var parents: ArrayList<Article>,
-	val title: String,
-	isDirectlyLinkedToEndArticle: Boolean = false
+	var parents: HashSet<Article>,
+	val title: String
 ) : Serializable{
+	var isEndArticle = false
+		set(value) {
+			field = value
+			isLinkedToEndArticle = true
+		}
 	var firstLink: Article? = null
 		set(value) {
 			field?.parents?.remove(this)
 			field = value
 			value?.parents?.add(this)
+			isLinkedToEndArticle = isEndArticle || firstLink?.isLinkedToEndArticle ?: false
 		}
-	var isLinkedToEndArticle: Boolean = isDirectlyLinkedToEndArticle || (firstLink?.isLinkedToEndArticle ?: false)
+	var isLinkedToEndArticle: Boolean = (firstLink?.isLinkedToEndArticle ?: false) || isEndArticle
 		//REMEMBER: THIS IS RECURSIVE. THIS IS LIKELY WHERE FUTURE INFINITE RECURSION ERRORS ARE COMING FROM, EVEN THOUGH IT DOESN'T LOOK RECURSIVE.
 		set(value) {
 			field = value
 			parents.forEach {
-				//if there's a change propagate, otherwise move on. should prevent infinite recursion and give slight performance boost
-				if (it.isLinkedToEndArticle != isLinkedToEndArticle)
+				if (it.isLinkedToEndArticle != value)
 					it.isLinkedToEndArticle = value
 			}
 		}
 
 	init {
-		//necessary to call setter code. Initializations do not call setter code, but this is an assignment (even though it looks like initialization.
+		//necessary to call setter code. Initializations do not call setter code, but this is an assignment (even though it looks like initialization.)
 		isLinkedToEndArticle = isLinkedToEndArticle
 	}
 
-	override fun equals(other: Any?): Boolean {
-		return other is Article && other.firstLink == firstLink && other.isLinkedToEndArticle == isLinkedToEndArticle && parents == other.parents
-	}
 
 	override fun toString(): String {
 		return "$title (links to ${firstLink?.title})"
 	}
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+
+		other as Article
+
+		if (parents != other.parents) return false
+		if (title != other.title) return false
+		if (isEndArticle != other.isEndArticle) return false
+		if (firstLink != other.firstLink) return false
+		if (isLinkedToEndArticle != other.isLinkedToEndArticle) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		return this.toString().hashCode()
+	}
+
+
 }
 
 class ArticleBuilder : Serializable {
 
 	var firstLink: Article? = null
-	var parents: ArrayList<Article> = ArrayList()
-	var isDirectlyLinkedToEndArticle = false
+	var parents: HashSet<Article> = HashSet()
+	var isEndArticle = false
 	var title:String? = null
 
 	init {
@@ -53,8 +72,8 @@ class ArticleBuilder : Serializable {
 
 	fun reset(): ArticleBuilder {
 		firstLink = null
-		parents = ArrayList()
-		isDirectlyLinkedToEndArticle = false
+		parents = HashSet()
+		isEndArticle = false
 		title = null
 		return this
 	}
@@ -64,7 +83,9 @@ class ArticleBuilder : Serializable {
 	fun build(): Article {
 		if(title == null)
 			error("You must provide a title for all new articles.")
-		val art = Article(parents, title!!, isDirectlyLinkedToEndArticle)
+		val art = Article(parents, title!!)
+		art.isLinkedToEndArticle = isEndArticle
+		art.isEndArticle = isEndArticle
 		art.firstLink = firstLink
 		reset()
 		return art
@@ -75,9 +96,9 @@ class ArticleBuilder : Serializable {
 
 class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCapacity), Serializable{
 	private val articleBuilder = ArticleBuilder()
-	override fun get(key: String): Article? {
+	override fun get(key: String): Article {
 		return if (super.containsKey(key))
-			super.get(key)
+			super.get(key)!!
 		else {
 			println("creating new article $key")
 			articleBuilder.reset()
@@ -86,7 +107,7 @@ class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCap
 				key, articleBuilder.build()
 			)
 			articleBuilder.reset()
-			super.get(key)
+			super.get(key)!!
 		}
 	}
 	fun save(path: String = "./ah.ser") {

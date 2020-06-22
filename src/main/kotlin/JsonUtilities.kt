@@ -17,7 +17,7 @@ fun createWikiRequestsFromParsedHtml(JsonObjectPageList: JsonObject): HashSet<Wi
 						((it.value as JsonObject).map["title"] as String),
 						StandardCharsets.UTF_8.toString()
 					)}"
-				), ::getFirstLink
+				), ::createEdge
 			).apply { this.callbackArguments["title"] = (it.value as JsonObject).map["title"] as String } //todo test
 		)
 	}

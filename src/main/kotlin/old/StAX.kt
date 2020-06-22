@@ -1,5 +1,6 @@
 package old
 
+import ArticleBuilder
 import java.io.*
 import javax.xml.stream.XMLEventReader
 import javax.xml.stream.XMLInputFactory
