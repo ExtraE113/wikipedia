@@ -28,7 +28,7 @@ internal class JsonUtilitiesKtTest {
 
 		val klaxon = Klaxon()
 		val parsed: JsonObject = klaxon.parseJsonObject(StringReader(URL(apiURLBase).readText()))
-		val result = createWikiRequestsFromParsedHtml(parsed).filter { it.callbackArguments["title"] in listOf("\$NT", "\"Mother\" Wright", "\"Sensational\" Sherri", "\"Captain\" Lou Albano", "!!!") }
+		val result = createWikiRequestsFromParsedJsonObjectPageList(parsed).filter { it.callbackArguments["title"] in listOf("\$NT", "\"Mother\" Wright", "\"Sensational\" Sherri", "\"Captain\" Lou Albano", "!!!") }
 		result.forEach{
 			target.contains(it) shouldBeEqualTo true
 		}

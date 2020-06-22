@@ -3,8 +3,8 @@ import org.junit.jupiter.api.Test
 
 class ArticleTests {
 
-	val articlesHolder = ArticlesHolder(5)
-	val articleBuilder = ArticleBuilder()
+	private val articlesHolder = ArticlesHolder(5)
+	private val articleBuilder = ArticleBuilder()
 
 	@Test
 	fun basicArticleTests() {

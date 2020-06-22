@@ -15,9 +15,9 @@ import java.nio.charset.StandardCharsets
 val WIKI = "simple"
 
 //this probably doesn't belong here. todo move
-val articlesHolder = ArticlesHolder(150_000)
+var articlesHolder = ArticlesHolder(150_000)
 
-val debugRunShort = false
+val debugRunShort = true
 val debugURLBase =
 	"https://simple.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=25&gapto=.tj"
 val apiURLBase =
@@ -99,7 +99,7 @@ fun addListRequestResultsToQueue(parsed: JsonObject, passthroughArguments: Map<S
 
 	//step 2
 	requestQueue.addAll(
-		createWikiRequestsFromParsedHtml(parsed)
+		createWikiRequestsFromParsedJsonObjectPageList(parsed)
 	)
 
 
@@ -182,13 +182,13 @@ fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 
 	val linkElement = getLinkElement(doc)
 
-	if (linkElement.tagName() != "a"){
-		throw Exception("Something has gone wrong-- getLinkElement didn't return an 'a' tag") //todo replace with flag for manual review
-	}
-
-	if (linkElement.attr("href").isEmpty() || !Regex("""/wiki/.+""").matches(linkElement.attr("href"))){
-		throw Exception("Something has gone wrong-- getLinkElement didn't return an internal wikilink") //todo replace with flag for manual review
-	}
+//	if (linkElement.tagName() != "a"){
+//		throw Exception("Something has gone wrong-- getLinkElement didn't return an 'a' tag") //todo replace with flag for manual review
+//	}
+//
+//	if (linkElement.attr("href").isEmpty() || !Regex("""/wiki/.+""").matches(linkElement.attr("href"))){
+//		throw Exception("Something has gone wrong-- getLinkElement didn't return an internal wikilink") //todo replace with flag for manual review
+//	}
 
 	makeArticle (
 		passthroughArguments["title"] as String,
