@@ -1,3 +1,5 @@
+package old
+
 import java.io.*
 import javax.xml.stream.XMLEventReader
 import javax.xml.stream.XMLInputFactory
@@ -24,7 +26,7 @@ fun main() {
         if (nextEvent.isStartElement) {
             val startElement = nextEvent.asStartElement()
             if (startElement.name.localPart.equals("page", ignoreCase = true)) {
-                readPage(reader)
+				readPage(reader)
                 count++
                 if (count >= 100)
                     break
@@ -47,7 +49,7 @@ private fun readPage(reader: XMLEventReader) {
 
     // while we're in the <page> element
     // technically speaking, just until we reach the end of a page element.
-    // Assumes we're at the beginning of a page element when the readPage method is called.
+    // Assumes we're at the beginning of a page element when the old.readPage method is called.
     while (!(xmlEvent.isEndElement && xmlEvent.asEndElement().name.localPart.equals("page", ignoreCase = true))) {
 
         if (xmlEvent.isStartElement) {
@@ -63,7 +65,7 @@ private fun readPage(reader: XMLEventReader) {
                     }
                 }
 //                "text" -> {
-//                    getFirstQualifyingLink(reader)
+//                    old.getFirstQualifyingLink(reader)
 //                }
             }
         }

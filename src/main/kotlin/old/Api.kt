@@ -1,4 +1,8 @@
-import com.beust.klaxon.JsonObject
+package old
+
+import WIKI
+import articleBuilder
+import articlesHolder
 import com.beust.klaxon.Klaxon
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
@@ -10,72 +14,59 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
 
-//<editor-fold desc="Set up constants">
-val WIKI = "simple"
-
-val articleBuilder = ArticleBuilder()
-val articlesHolder = ArticlesHolder(500)
-
-val debugRunShort = false
-val debugURLBase =
-	"https://simple.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=25&gapto=.tj"
-val apiURLBase =
-	if (!debugRunShort) "https://$WIKI.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=max" else debugURLBase
-//</editor-fold>
-
-fun main() {
-	try {
-		core()
-	} catch (e: Throwable) {
-		e.printStackTrace()
-	}
-
-}
-
-//todo parse json better/cleaner
-
-fun core() {
-	var r = URL(apiURLBase)
-	val klaxon = Klaxon()
-	var parsed = klaxon.parseJsonObject(StringReader(r.readText()))
-
-	processPagesFromJsonObjectPageList(parsed)
-
-	while (canContinue(parsed)) {
-		r =
-			URL("$apiURLBase&continue=${(parsed["continue"] as JsonObject)["continue"]}&gapcontinue=${(parsed["continue"] as JsonObject)["gapcontinue"]}") //black magic json processing todo clean up
-		parsed = klaxon.parseJsonObject(StringReader(r.readText()))
-		processPagesFromJsonObjectPageList(parsed)
-	}
-
-	articlesHolder.save()
-
-}
-
-//checks if there is a continue block in the response, if there is then we can continue because there are more results
-private fun canContinue(parsed: JsonObject) = parsed["continue"] != null
-
-fun processPagesFromJsonObjectPageList(parsed: JsonObject) {
-	//pages is a JsonObject of all of the pages/articles that we can iterate through
-	val pages: JsonObject = (parsed["query"] as JsonObject).obj("pages")!!
-	pages.forEach {
-		println(
-			it.key + " " +
-					makeArticle((it.value as JsonObject).map["title"] as String).toString()
-		)
-	}
-}
+//fun core() {
+//	var r = URL(old.getApiURLBase)
+//	val klaxon = Klaxon()
+//	var parsed = klaxon.parseJsonObject(StringReader(r.readText()))
+//
+//	processPagesFromJsonObjectPageList(parsed)
+//
+//	while (old.canContinue(parsed)) {
+//		r =
+//			URL(
+//				old.getApiURLBase + old.continueArguments(parsed)
+//			)
+//		println("!!!!!!! " + r.query)
+//		parsed = klaxon.parseJsonObject(StringReader(r.readText()))
+//		processPagesFromJsonObjectPageList(parsed)
+//	}
+//
+//	old.getArticlesHolder.save()
+//
+//}
 
 
+
+
+
+//fun processPagesFromJsonObjectPageList(parsed: JsonObject) {
+//	//pages is a JsonObject of all of the pages/articles that we can iterate through
+//
+//	val pages: JsonObject = (parsed["query"] as JsonObject).obj("pages")!!
+//	pages.forEach {
+//		println(
+//			it.key + ": " +
+//					old.makeArticle((it.value as JsonObject).map["title"] as String).toString()
+//		)
+//	}
+//}
+
+
+//makes an article given a title and adds it to old.getArticlesHolder
+//also makes the article it links to
+//todo should also probably be modified to work with whatever structure we end up using based on this
+//	(https://kotlinlang.org/docs/reference/coroutines/shared-mutable-state-and-concurrency.html#actors)
 fun makeArticle(title: String): Article? {
 	val titleOfArticleLinkedTo: String =
 		getLinkFromTitle(title) //todo is there a more concise equally descriptive name?
 
+	//todo all this behavior probably belongs in the ArticleHolder class
+	//	or at least should return something instead of modifying as a side effect
 	return if (articlesHolder.containsKey(title)) {
 		articlesHolder[title]!!.firstLink = articlesHolder[titleOfArticleLinkedTo]
 		articlesHolder[title]
 	} else {
-		//todo make sure articleBuilder isn't being used anywhere
+		//todo make sure old.getArticleBuilder isn't being used anywhere
 		articleBuilder.reset()
 		articleBuilder.title = title
 		articleBuilder.firstLink = articlesHolder[titleOfArticleLinkedTo]
@@ -85,7 +76,8 @@ fun makeArticle(title: String): Article? {
 	}
 }
 
-
+//gets the first link given the title of a page (string)
+//todo if the result isn't in either the queue or the articleHolder normalize the title (https://www.mediawiki.org/wiki/API:Query#Example_2:_Title_normalization)
 fun getLinkFromTitle(title: String, wiki: String = WIKI): String {
 	val link = "https://$wiki.wikipedia.org/w/api.php?action=parse&format=json&page=${URLEncoder.encode(
 		title,
@@ -104,7 +96,7 @@ fun getLinkFromTitle(title: String, wiki: String = WIKI): String {
 
 fun getFirstLink(doc: Node): Element {
 	doc.childNodes()
-		.filter { it is Element && (it.tagName() in listOf("p", "ul", "ol") || it.attr("class") == "redirectMsg") }
+		.filter { it is Element && (it.tagName() in listOf("p", "ul", "ol") /* todo expand*/ || it.attr("class") == "redirectMsg") }
 		.forEach { topLevelChildren ->
 			var stringRepresentation = topLevelChildren.toString()
 			val item = Jsoup.parseBodyFragment(stringRepresentation)
@@ -123,7 +115,6 @@ fun getFirstLink(doc: Node): Element {
 			val line = Jsoup.parseBodyFragment(stringRepresentation)
 
 			val linksNotParend: Elements = line.select("a[href]")
-
 			if (linksNotParend.size > 0) {
 
 				linksNotParend.forEach { it1 ->
@@ -139,7 +130,8 @@ fun getFirstLink(doc: Node): Element {
 					*/
 					if (!it1.attr("href").contains("redlink=1") &&
 						parentIsNotIllegal(parent) &&
-						Regex("""/wiki/.+""").matches(it1.attr("href"))
+						Regex("""/wiki/.+""").matches(it1.attr("href")) &&
+						!it1.attr("href").startsWith("/wiki/File:") //todo test
 					) {
 						return it1
 					}
@@ -171,5 +163,5 @@ fun extractWikiLink(link: Element): String {
 			.replace("--__OPEN-PAREN__--", "(")
 			.replace("--__CLOSE-PAREN__--", ")")
 			.split("#")[0] //ignore anchors
-	return ""
+	return "" //todo got to be a better way of doing this
 }

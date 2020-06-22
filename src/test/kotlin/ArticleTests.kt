@@ -1,3 +1,6 @@
+import old.Article
+import old.ArticleBuilder
+import old.ArticlesHolder
 import org.amshove.kluent.shouldBeEqualTo
 import org.junit.jupiter.api.Test
 

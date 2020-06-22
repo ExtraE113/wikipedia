@@ -18,3 +18,22 @@
     // would have to edit ArticleHolder.get to not create new articles dynamically (or do it differently?)
 
 //todo write like a ton of tests
+//todo retry once or twice
+//todo switch to a callback style method where URLs (as strings) and callback methods are loaded into a que
+    //that way all the network code can be grouped together
+    //or something else that allows network code to be handled reasonably
+
+//todo make pages/articles language consistent
+
+//todo there's some problem with 'N sync that I don't understand. something with file encoding?
+//todo I think crash bandicoot is broken
+    //https://simple.wikipedia.org/wiki/Crash_Bandicoot
+
+//todo visualizing all links could be interesting as a side project to this side project
+
+//todo don't count File: links
+//todo fix multiple encoding issue (somehow)- does the api have a way to support this?
+
+//todo dashboard- prometheus?
+
+//todo save often automatically and load from saved state

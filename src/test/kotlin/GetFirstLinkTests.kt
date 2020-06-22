@@ -1,3 +1,4 @@
+import old.getLinkFromTitle
 import org.amshove.kluent.shouldBeEqualTo
 import org.amshove.kluent.shouldBeIn
 import org.junit.jupiter.api.Test
@@ -5,6 +6,7 @@ import org.junit.jupiter.api.Test
 class GetFirstLinkTests{
     @Test
     fun getFirstLinkFromTitleTest() {
+        //todo document-- which of these tests tests what?
         getLinkFromTitle("Fire_pump", wiki = "simple") shouldBeEqualTo "Pump"
         getLinkFromTitle("Lise_Meitner", wiki = "simple") shouldBeEqualTo "Physicist"
         getLinkFromTitle("Tachisme", wiki = "simple") shouldBeEqualTo ""
