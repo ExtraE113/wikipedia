@@ -1,10 +1,16 @@
 import org.amshove.kluent.*
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 class ArticleTests {
 
-	private val articlesHolder = ArticlesHolder(5)
-	private val articleBuilder = ArticleBuilder()
+	private var articleBuilder = ArticleBuilder()
+
+	@BeforeEach
+	fun reset() {
+		articlesHolder = ArticlesHolder(5)
+		articleBuilder = ArticleBuilder()
+	}
 
 	@Test
 	fun basicArticleTests() {
@@ -18,32 +24,32 @@ class ArticleTests {
 		articleBuilder.title shouldBeEqualTo null
 
 
-		articleBuilder.firstLink = articlesHolder["def"]
+		articleBuilder.firstLink = "def"
 		articleBuilder.title = "ghk"
-        articleBuilder.isEndArticle = true
+		articleBuilder.isEndArticle = true
 		articlesHolder["ghk"] = articleBuilder.build()
-        //test that reset is working AND called after .build
+		//test that reset is working AND called after .build
 		articleBuilder.title shouldBeEqualTo null
-        articleBuilder.firstLink shouldBeEqualTo null
-        articleBuilder.isEndArticle shouldBeEqualTo false
+		articleBuilder.firstLink shouldBeEqualTo null
+		articleBuilder.isEndArticle shouldBeEqualTo false
 
-		val targetArticle = Article(HashSet(), "ghk").apply { isEndArticle = true }
-		targetArticle.firstLink = articlesHolder["def"]
 
-		articlesHolder["ghk"] shouldBeEqualTo targetArticle
+		articlesHolder["def"].firstLink = "ghk"
+		articlesHolder["ghk"] shouldBeEqualTo articlesHolder["ghk"]
+
 
 		//check that trying to build without title should blow up
-		invoking {  articleBuilder.build() } shouldThrow AnyException
+		invoking { articleBuilder.build() } shouldThrow AnyException
 
 		//test parent propagation
-		articlesHolder["lmn"].firstLink = articlesHolder["pqr"]
+		articlesHolder["lmn"].firstLink = "pqr"
 
-		articlesHolder["pqr"].parents shouldContain articlesHolder["lmn"]
+		articlesHolder["pqr"].parents shouldContain "lmn"
 
 		//test linked to end article propagation
-		articlesHolder["pqr"].firstLink = articlesHolder["xyz"]
-		articlesHolder["xyz"].firstLink = articlesHolder["def"]
-		articlesHolder["def"].firstLink = articlesHolder["stu"]
+		articlesHolder["pqr"].firstLink = "xyz"
+		articlesHolder["xyz"].firstLink = "def"
+		articlesHolder["def"].firstLink = "stu"
 
 
 		articlesHolder["stu"].isLinkedToEndArticle = true
@@ -52,7 +58,7 @@ class ArticleTests {
 		//make sure we don't get infinite recursion with parents
 		articlesHolder["stu"].isLinkedToEndArticle = false
 		articlesHolder["lmn"].isLinkedToEndArticle `should be equal to` false
-		articlesHolder["stu"].firstLink = articlesHolder["lmn"]
+		articlesHolder["stu"].firstLink = "lmn"
 		articlesHolder["stu"].isLinkedToEndArticle = true
 		articlesHolder["lmn"].isLinkedToEndArticle `should be equal to` true
 	}
@@ -60,7 +66,23 @@ class ArticleTests {
 	@Test
 	fun serializationTest() {
 		//consider expanding
+		//<editor-fold desc="Set up the articlesHolder">
+		//some super basic tests
+		articlesHolder["lmn"].firstLink = "pqr"
+		articlesHolder["pqr"].firstLink = "xyz"
+		articlesHolder["xyz"].firstLink = "def"
+		articlesHolder["def"].firstLink = "stu"
+		articlesHolder["stu"].isLinkedToEndArticle = true
+		articlesHolder["stu"].isLinkedToEndArticle = false
+		articlesHolder["stu"].firstLink = "lmn"
+		articlesHolder["stu"].isLinkedToEndArticle = true
+		//</editor-fold>
+
 		articlesHolder.save("./ahTest.ser")
-		ArticlesHolder.load("./ahTest.ser") shouldBeEqualTo articlesHolder
+		val a = articlesHolder
+		val b = ArticlesHolder.load("./ahTest.ser")
+		val c = a==b
+		c shouldBeEqualTo true
+		//a shouldBeEqualTo b this fails. that's dumb
 	}
 }

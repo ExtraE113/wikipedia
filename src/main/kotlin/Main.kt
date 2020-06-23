@@ -17,7 +17,7 @@ val WIKI = "simple"
 //this probably doesn't belong here. todo move
 var articlesHolder = ArticlesHolder(150_000)
 
-val debugRunShort = true
+val debugRunShort = false
 val debugURLBase =
 	"https://simple.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=25&gapto=.tj"
 val apiURLBase =
@@ -174,7 +174,7 @@ fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 	//todo should also probably be modified to work with whatever structure we end up using based on this
 	//	(https://kotlinlang.org/docs/reference/coroutines/shared-mutable-state-and-concurrency.html#actors)
 	fun makeArticle(title: String, titleOfArticleLinkedTo: String) {
-		articlesHolder[title].firstLink = articlesHolder[titleOfArticleLinkedTo]
+		articlesHolder[title].firstLink = titleOfArticleLinkedTo
 	}
 
 	val html = response.obj("parse")!!.obj("text")!!["*"]!!

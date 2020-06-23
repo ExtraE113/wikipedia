@@ -1,7 +1,7 @@
 import java.io.*
 
 class Article(
-	var parents: HashSet<Article>,
+	var parents: HashSet<String>,
 	val title: String
 ) : Serializable{
 	var isEndArticle = false
@@ -9,20 +9,20 @@ class Article(
 			field = value
 			isLinkedToEndArticle = true
 		}
-	var firstLink: Article? = null
+	var firstLink: String? = null
 		set(value) {
-			field?.parents?.remove(this)
+			articlesHolder[field]?.parents?.remove(title)
 			field = value
-			value?.parents?.add(this)
-			isLinkedToEndArticle = isEndArticle || firstLink?.isLinkedToEndArticle ?: false
+			articlesHolder[value]?.parents?.add(title)
+			isLinkedToEndArticle = isEndArticle || articlesHolder[firstLink]?.isLinkedToEndArticle ?: false
 		}
-	var isLinkedToEndArticle: Boolean = (firstLink?.isLinkedToEndArticle ?: false) || isEndArticle
+	var isLinkedToEndArticle: Boolean = (articlesHolder[firstLink]?.isLinkedToEndArticle ?: false) || isEndArticle
 		//REMEMBER: THIS IS RECURSIVE. THIS IS LIKELY WHERE FUTURE INFINITE RECURSION ERRORS ARE COMING FROM, EVEN THOUGH IT DOESN'T LOOK RECURSIVE.
 		set(value) {
 			field = value
 			parents.forEach {
-				if (it.isLinkedToEndArticle != value)
-					it.isLinkedToEndArticle = value
+				if (articlesHolder[it].isLinkedToEndArticle != value)
+					articlesHolder[it].isLinkedToEndArticle = value
 			}
 		}
 
@@ -33,7 +33,7 @@ class Article(
 
 
 	override fun toString(): String {
-		return "$title (links to ${firstLink?.title})"
+		return "$title (links to ${firstLink}) [parents: $parents]"
 	}
 
 	override fun equals(other: Any?): Boolean {
@@ -42,7 +42,8 @@ class Article(
 
 		other as Article
 
-		if (parents != other.parents) return false
+		if (other.parents != this.parents) return false
+
 		if (title != other.title) return false
 		if (isEndArticle != other.isEndArticle) return false
 		if (firstLink != other.firstLink) return false
@@ -60,8 +61,8 @@ class Article(
 
 class ArticleBuilder : Serializable {
 
-	var firstLink: Article? = null
-	var parents: HashSet<Article> = HashSet()
+	var firstLink: String? = null
+	var parents: HashSet<String> = HashSet()
 	var isEndArticle = false
 	var title:String? = null
 
@@ -122,6 +123,27 @@ class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCap
 			i.printStackTrace()
 		}
 	}
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+
+		other as ArticlesHolder
+
+		if(this.toList().sortedBy { it.first } != other.toList().sortedBy { it.first }) {
+			println(this.toList().sortedBy { it.first })
+			println(other.toList().sortedBy { it.first })
+			return false
+		}
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		return super.hashCode()
+	}
+
+
 	companion object {
 		fun load(path:String = "./ah.ser"): ArticlesHolder {
 			var out: ArticlesHolder? = null
@@ -131,6 +153,7 @@ class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCap
 				out = `in`.readObject() as ArticlesHolder
 				`in`.close()
 				fileIn.close()
+				println(out)
 			} catch (i: IOException) {
 				i.printStackTrace()
 
@@ -139,26 +162,6 @@ class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCap
 				c.printStackTrace()
 			}
 			return out!!
-		}
-
-		//todo test
-		//todo take object as input instead of serialized object
-		fun toCSV(inputPath: String = "./ah.ser" , outputPath: String = "./ah/"){
-			val ah = load(inputPath)
-			val elements = File(outputPath + "elements.csv")
-			val connections = File(outputPath + "connections.csv")
-			var counter = 0
-			ah.forEach {
-				fun sanitizeForCSV(string: String?): String? {
-					return string?.replace("\n", "newline")?.replace(",", "comma")
-				}
-				elements.appendText("${sanitizeForCSV(it.value.title)}\n")
-				connections.appendText(("${sanitizeForCSV(it.value.title)},${sanitizeForCSV(it.value.firstLink?.title)}\n"))
-				counter++
-				if (counter % 1000 == 0){
-					println((counter.toDouble() / ah.size) * 100)
-				}
-			}
 		}
 	}
 

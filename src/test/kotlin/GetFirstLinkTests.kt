@@ -115,7 +115,7 @@ class GetFirstLinkTests {
 			val (URL, callback) = wikiRequest
 			val parsed: JsonObject = klaxon.parseJsonObject(StringReader(URL.readText()))
 			callback(parsed, wikiRequest.callbackArguments)
-			articlesHolder[it.first.getValue("title")].firstLink?.title shouldBeEqualTo it.second.getValue("fl")
+			articlesHolder[it.first.getValue("title")].firstLink shouldBeEqualTo it.second.getValue("fl")
 		}
 	}
 
