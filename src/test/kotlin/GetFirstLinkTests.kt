@@ -119,6 +119,11 @@ class GetFirstLinkTests {
 		}
 	}
 
+	@Test
+	fun shouldFail(){
+		true shouldBeEqualTo false
+	}
+
 //	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Lise_Meitner"), wiki = "simple") shouldBeEqualTo "Physicist"}
 //	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Tachisme"), wiki = "simple") shouldBeEqualTo ""}
 //	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("1189"), wiki = "simple") shouldBeEqualTo "January_21"}
