@@ -5,32 +5,17 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.select.Elements
 import java.io.StringReader
-import java.lang.Exception
 import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-
-//<editor-fold desc="Set up constants">
-val WIKI = "simple"
-
-//this probably doesn't belong here. todo move
-var articlesHolder = ArticlesHolder(150_000)
-
-val debugRunShort = false
-val debugURLBase =
-	"https://simple.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=25&gapto=.tj"
-val apiURLBase =
-	if (!debugRunShort) "https://$WIKI.wikipedia.org/w/api.php?action=query&format=json&generator=allpages&gaplimit=max" else debugURLBase
-//</editor-fold>
-
-var requestQueue: PriorityQueueNoDuplicates<WikiRequest> = PriorityQueueNoDuplicates()
+val requestQueue: PriorityQueueNoDuplicates<WikiRequest> = PriorityQueueNoDuplicates()
 
 fun main() {
 	requestQueue.add(
 		WikiRequest(
 			URL(apiURLBase),
-			::addListRequestResultsToQueue,
+			::addAllPagesQueryResultsToQueue,
 			100
 		)
 	)
@@ -69,7 +54,7 @@ fun main() {
  * @see WikiRequest
  */
 
-fun addListRequestResultsToQueue(parsed: JsonObject, passthroughArguments: Map<String, Any>) { //todo name better
+fun addAllPagesQueryResultsToQueue(parsed: JsonObject, passthroughArguments: Map<String, Any>) {
 
 	//checks if there is a continue block in the response, if there is then we can continue because there are more results
 	//todo test
@@ -92,7 +77,7 @@ fun addListRequestResultsToQueue(parsed: JsonObject, passthroughArguments: Map<S
 	if (canContinue(parsed)) {
 		requestQueue.add(
 			WikiRequest(
-				URL(apiURLBase + continueArguments(parsed)), ::addListRequestResultsToQueue, 100
+				URL(apiURLBase + continueArguments(parsed)), ::addAllPagesQueryResultsToQueue, 100
 			)
 		)
 	}

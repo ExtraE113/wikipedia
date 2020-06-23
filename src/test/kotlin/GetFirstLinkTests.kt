@@ -8,9 +8,10 @@ import java.io.StringReader
 import java.net.URL
 
 class GetFirstLinkTests {
-	val klaxon = Klaxon()
+	private val klaxon = Klaxon()
 
-	val targets = listOf(
+	//todo document-- which of these tests tests what?
+	private val targets = listOf(
 		mapOf(
 			"title" to "Fire_pump",
 			"wiki" to "simple"
@@ -102,7 +103,7 @@ class GetFirstLinkTests {
 		articlesHolder = ArticlesHolder(5)
 	}
 
-	//todo document-- which of these tests tests what?
+
 	@Test
 	fun createEdge() {
 		targets.forEach{
@@ -118,16 +119,4 @@ class GetFirstLinkTests {
 			articlesHolder[it.first.getValue("title")].firstLink shouldBeEqualTo it.second.getValue("fl")
 		}
 	}
-
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Lise_Meitner"), wiki = "simple") shouldBeEqualTo "Physicist"}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Tachisme"), wiki = "simple") shouldBeEqualTo ""}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("1189"), wiki = "simple") shouldBeEqualTo "January_21"}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Swedish_Lapland"), wiki = "simple") shouldBeEqualTo "Provinces_of_Sweden"}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Black_Panther_Party"), wiki = "simple") shouldBeIn  arrayOf("Socialist", "Socialism")}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Javier_Valentín"), wiki = "en") shouldBeEqualTo "Catcher"}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Frank_Herbert"), wiki = "en") shouldBeEqualTo "List_of_science_fiction_authors"}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("Ernest_Cline"), wiki = "en") shouldBeEqualTo "Ready_Player_One_(film)"}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("John_Corabi"), wiki = "en") shouldBeEqualTo "The_Scream_(band)"}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("&"), wiki = "simple") shouldBeIn arrayOf("Ampersand", "Logogram")}
-//	fun createEdgeN() { val wikiRequest = createWikiRequestFromTitle("0s"), wiki = "simple") shouldBeEqualTo "Regent"
 }

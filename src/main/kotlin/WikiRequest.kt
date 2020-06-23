@@ -4,7 +4,6 @@ import java.lang.System.currentTimeMillis
 import java.net.URL
 
 //todo document
-//todo add time created as compareTo tiebreaker (does [PriorityQueue] do this automatically?)
 data class WikiRequest(val url: URL, val callback: (JsonObject, Map<String, Any>) -> Unit) : Serializable,
 	Comparable<WikiRequest> {
 	var priority: Int = 10

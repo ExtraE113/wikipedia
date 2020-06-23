@@ -115,7 +115,7 @@ class ArticlesHolder(initialCapacity: Int) : HashMap<String, Article>(initialCap
 		try {
 			val fileOut = FileOutputStream(path)
 			val out = ObjectOutputStream(fileOut)
-			out.writeObject(articlesHolder) //todo is this right?
+			out.writeObject(articlesHolder)
 			out.close()
 			fileOut.close()
 			System.out.printf("Serialized data is saved in $path")
