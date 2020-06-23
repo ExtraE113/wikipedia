@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Build
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -24,6 +24,5 @@ jobs:
       - uses: actions/setup-java@v1.3.0
         with:
           java-version: '9.0.4'
-      - run: ./gradlew clean test
       - run: ./gradlew clean build
 
