@@ -1,3 +1,4 @@
+![CI](https://github.com/ExtraE113/wikipedia/workflows/CI/badge.svg)
 # Wiki philosophy
 Wiki philosophy is in development. It will poll wikipedia (or any wikimedia project) and get and maintain a list of
 articles that don't eventually first-link to a latter page.
