@@ -95,6 +95,23 @@ class GetFirstLinkTests {
 		) to mapOf(
 			"url" to "https://simple.wikipedia.org/w/api.php?action=parse&format=json&page=0s",
 			"fl" to "Regent"
+		),
+		//tests for italic or partially italic children
+		mapOf(
+			"title" to "Crash_Bandicoot",
+			"wiki" to "simple"
+		) to mapOf(
+			"url" to "https://simple.wikipedia.org/w/api.php?action=parse&format=json&page=Crash_Bandicoot",
+			"fl" to "Crash_Bandicoot_(character)"
+		),
+		//we shouldn't need this but just in case
+		//tests for artices that don't exits
+		mapOf(
+			"title" to "afieapnfeaponfeapnfei",
+			"wiki" to "simple"
+		) to mapOf(
+			"url" to "https://simple.wikipedia.org/w/api.php?action=parse&format=json&page=afieapnfeaponfeapnfei",
+			"fl" to ""
 		)
 	)
 
