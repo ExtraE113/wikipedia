@@ -2,14 +2,14 @@
 ![Build](https://github.com/ExtraE113/wikipedia/workflows/Build/badge.svg)
 # Wiki philosophy
 Wiki philosophy is in development. It will poll wikipedia (or any wikimedia project) and get and maintain a list of
-articles that don't eventually first-link to a latter page.
+articles that don't eventually first-link to a specific page. (By default that don't link to philosophy).
 
 ## Popular references in media and online
 
 The first-link philosophy phenomenon is popular online. 
 
 ### XKCD
-The popularization of this phenomanon is likely do mostly to an XKCD comic.
+The popularization of this phenomanon is likely do mostly to this XKCD comic.
 ![An XKCD. commic that popularized this traverse](https://imgs.xkcd.com/comics/extended_mind.png)
 
 [link to the comic](xkcd.com/903)
