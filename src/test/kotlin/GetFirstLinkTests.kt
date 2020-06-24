@@ -111,7 +111,7 @@ class GetFirstLinkTests {
 			"wiki" to "simple"
 		) to mapOf(
 			"url" to "https://simple.wikipedia.org/w/api.php?action=parse&format=json&page=afieapnfeaponfeapnfei",
-			"fl" to "--__Not-An-Article__--"
+			"fl" to "--__Not-An-Article__--" //todo fix this kind of thing (or at least log collisions)
 		)
 	)
 
