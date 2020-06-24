@@ -26,7 +26,7 @@ fun main() {
 
 
 	while (true) {
-		if(requestQueue.isNotEmpty()) {
+		if (requestQueue.isNotEmpty()) {
 			val next: WikiRequest = requestQueue.poll()
 			println(next)
 			val (URL, callback) = next
@@ -36,7 +36,7 @@ fun main() {
 			if (counter % 100 == 0) {
 				articlesHolder.save(path = "./ah$counter.ser")
 			}
-		} else{
+		} else {
 			articlesHolder.save(path = "./ah$counter.ser")
 			break
 		}
@@ -104,7 +104,13 @@ fun addAllPagesQueryResultsToQueue(parsed: JsonObject, passthroughArguments: Map
 fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 	fun getLinkElement(doc: Node): Element {
 		doc.childNodes()
-			.filter { it is Element && (it.tagName() in listOf("p", "ul", "ol") /* todo expand*/ || it.attr("class") == "redirectMsg") }
+			.filter {
+				it is Element && (it.tagName() in listOf(
+					"p",
+					"ul",
+					"ol"
+				) /* todo expand*/ || it.attr("class") == "redirectMsg")
+			}
 			.forEach { topLevelChildren ->
 				var stringRepresentation = topLevelChildren.toString()
 				val item = Jsoup.parseBodyFragment(stringRepresentation)
@@ -125,22 +131,42 @@ fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 				val linksNotParend: Elements = line.select("a[href]")
 				if (linksNotParend.size > 0) {
 
-					fun parentIsNotIllegal(parent: Element) =
+					fun parentOrChildIsNotIllegal(parent: Element) =
 						parent.tagName() != "i" /*parent is not italics*/ && "reference" !in parent.classNames() /*not a footnote i.e. parent is not a reference class*/
 
 					linksNotParend.forEach { it1 ->
 						var parent = it1.parent()
+						var foundIllegalParent: Boolean
 						//iterate until either we run out of parents or find an illegal parent
-						while (parentIsNotIllegal(parent) && parent.hasParent()) {
+						while (parentOrChildIsNotIllegal(parent) && parent.hasParent()) {
 							parent = parent.parent()
 						}
+
+						//if we stopped iterating because we found an illegal parent, then the current parent is illegal
+						//so we can set foundIllegalParent
+						foundIllegalParent = !parentOrChildIsNotIllegal(parent)
+
+						var foundIllegalChild = false
+
+						fun lookForIllegalChildren(children: Elements) {
+							for (it in children) {
+								if (!parentOrChildIsNotIllegal(it)) {
+									foundIllegalChild = true
+									break
+								}
+								lookForIllegalChildren(it.children())
+							}
+						}
+
+						lookForIllegalChildren(it1.children())
+
 						/*
-						and if we stopped iterating because we ran out (not because the one we stopped on is illegal)
-						return this link, assuming it meets a few other conditions
-							namely, is not a red link, is an internal wikilink
+						 *	and if we didn't find an illegal parent or child, assuming it meets a few other conditions
+						 *	namely, is not a red link, is an internal wikilink
+						 *	then return this
 						*/
 						if (!it1.attr("href").contains("redlink=1") &&
-							parentIsNotIllegal(parent) &&
+							!foundIllegalParent && !foundIllegalChild &&
 							Regex("""/wiki/.+""").matches(it1.attr("href")) &&
 							!it1.attr("href").startsWith("/wiki/File:") //todo test
 						) {
@@ -161,7 +187,10 @@ fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 	fun makeArticle(title: String, titleOfArticleLinkedTo: String) {
 		articlesHolder[title].firstLink = titleOfArticleLinkedTo
 	}
-
+	if (response.obj("error")?.get("code").toString() == "missingtitle"){
+		makeArticle(passthroughArguments["title"].toString(), "")
+		return
+	}
 	val html = response.obj("parse")!!.obj("text")!!["*"]!!
 	val doc: Node = Jsoup.parse(html.toString()).body().getElementsByClass("mw-parser-output")[0]
 
@@ -175,17 +204,16 @@ fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 //		throw Exception("Something has gone wrong-- getLinkElement didn't return an internal wikilink") //todo replace with flag for manual review
 //	}
 
-	makeArticle (
+	makeArticle(
 		passthroughArguments["title"] as String,
-		if(linkElement.attr("href") != null && linkElement.attr("href").length > 6)
-		 linkElement.attr("href")
-			.substring(6) //after the /wiki/
-			.replace("--__OPEN-PAREN__--", "(")
-			.replace("--__CLOSE-PAREN__--", ")")
-			.split("#")[0] //ignore anchors
-	 else "" /*todo got to be a better way of doing this*/
+		if (linkElement.attr("href") != null && linkElement.attr("href").length > 6)
+			linkElement.attr("href")
+				.substring(6) //after the /wiki/
+				.replace("--__OPEN-PAREN__--", "(")
+				.replace("--__CLOSE-PAREN__--", ")")
+				.split("#")[0] //ignore anchors
+		else "" /*todo got to be a better way of doing this*/
 	)
-
 
 
 }
