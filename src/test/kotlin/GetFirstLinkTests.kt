@@ -105,13 +105,13 @@ class GetFirstLinkTests {
 			"fl" to "Crash_Bandicoot_(character)"
 		),
 		//we shouldn't need this but just in case
-		//tests for artices that don't exits
+		//tests for artices that don't exist
 		mapOf(
 			"title" to "afieapnfeaponfeapnfei",
 			"wiki" to "simple"
 		) to mapOf(
 			"url" to "https://simple.wikipedia.org/w/api.php?action=parse&format=json&page=afieapnfeaponfeapnfei",
-			"fl" to ""
+			"fl" to "--__Not-An-Article__--"
 		)
 	)
 

@@ -187,8 +187,10 @@ fun createEdge(response: JsonObject, passthroughArguments: Map<String, Any>) {
 	fun makeArticle(title: String, titleOfArticleLinkedTo: String) {
 		articlesHolder[title].firstLink = titleOfArticleLinkedTo
 	}
+
+	//if we somehow ask for an article that doesn't exist
 	if (response.obj("error")?.get("code").toString() == "missingtitle"){
-		makeArticle(passthroughArguments["title"].toString(), "")
+		makeArticle(passthroughArguments["title"].toString(), "--__Not-An-Article__--")
 		return
 	}
 	val html = response.obj("parse")!!.obj("text")!!["*"]!!
